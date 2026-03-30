@@ -1,12 +1,14 @@
 import logging
-from typing import Callable, Optional
-from scapy.all import AsyncSniffer
+from typing import Callable
 from scapy.packet import Packet
 from scapy.layers.dot11 import Dot11, Dot11Deauth, Dot11Disas
 
+# Import our new base class
+from core.sniffer import BaseSniffer
+
 logger = logging.getLogger(__name__)
 
-class WifiMonitor:
+class WifiMonitor(BaseSniffer):
     """
     Asynchronous 802.11 monitor designed to capture and parse
     Deauthentication and Disassociation management frames.
@@ -14,37 +16,24 @@ class WifiMonitor:
 
     def __init__(self, interface: str, packet_callback: Callable[[dict], None]) -> None:
         """
-        Initializes the Wi-Fi monitor.
-
         Args:
-            interface (str): The wireless interface in monitor mode (e.g., 'wlan0mon').
-            packet_callback (Callable[[dict], None]): The function to call when a threat frame is detected.
+            interface (str): The wireless interface in monitor mode.
+            packet_callback (Callable): The sequence analyzer function.
         """
-        self.interface: str = interface
         self.packet_callback: Callable[[dict], None] = packet_callback
-        self.sniffer: Optional[AsyncSniffer] = None
+        bpf_filter: str = "type mgt subtype deauth or type mgt subtype disassoc"
         
-        # BPF filter: type 0 is Management, subtype 12 is Deauth, subtype 10 is Disassoc
-        self.bpf_filter: str = "type mgt subtype deauth or type mgt subtype disassoc"
+        # Initialize the base sniffer with our specific filter and parsing method
+        super().__init__(interface=interface, bpf_filter=bpf_filter, callback=self._process_packet)
 
     def _process_packet(self, pkt: Packet) -> None:
-        """
-        Internal callback to parse the raw Scapy packet and extract relevant state data.
-        
-        Args:
-            pkt (Packet): The captured 802.11 packet.
-        """
+        """Internal callback to parse raw Dot11 frames."""
         if not pkt.haslayer(Dot11):
             return
 
-        # 802.11 Frame Addresses:
-        # addr1 = Destination (Receiver)
-        # addr2 = Source (Transmitter)
-        # addr3 = BSSID (Access Point)
         sta_mac: str = str(pkt.addr1)
         ap_mac: str = str(pkt.addr2)
         
-        # Determine frame type and reason code
         frame_type: str = "UNKNOWN"
         reason_code: int = 0
         
@@ -57,13 +46,9 @@ class WifiMonitor:
         else:
             return
 
-        # Extract the sequence number. 
-        # The Sequence Control (SC) field is 16 bits: 4 bits fragment number, 12 bits sequence number.
-        # We bit-shift right by 4 to isolate the sequence number.
         sequence_control: int = pkt[Dot11].SC if pkt[Dot11].SC else 0
         sequence_number: int = sequence_control >> 4
 
-        # Package the extracted data into a clean dictionary for the sequence analyzer
         event_data: dict = {
             "type": frame_type,
             "source_mac": ap_mac,
@@ -72,29 +57,12 @@ class WifiMonitor:
             "sequence_number": sequence_number
         }
 
-        # Pass to the logic engine/sequence analyzer
         self.packet_callback(event_data)
 
     def start(self) -> None:
-        """Starts the asynchronous packet sniffer."""
-        logger.info(f"Starting Wi-Fi monitor on {self.interface}...")
-        try:
-            self.sniffer = AsyncSniffer(
-                iface=self.interface,
-                filter=self.bpf_filter,
-                prn=self._process_packet,
-                store=False  # Do not keep packets in memory to prevent memory leaks
-            )
-            self.sniffer.start()
-            logger.info("Wi-Fi monitor is running in the background.")
-        except Exception as e:
-            logger.error(f"Failed to start Wi-Fi sniffer: {e}")
-            raise
+        """Overrides base start to provide a specific module name for logs."""
+        super().start(name="Wi-Fi Monitor")
 
     def stop(self) -> None:
-        """Stops the asynchronous packet sniffer."""
-        if self.sniffer and self.sniffer.running:
-            logger.info("Stopping Wi-Fi monitor...")
-            self.sniffer.stop()
-            self.sniffer.join()
-            logger.info("Wi-Fi monitor stopped.")
+        """Overrides base stop to provide a specific module name for logs."""
+        super().stop(name="Wi-Fi Monitor")
