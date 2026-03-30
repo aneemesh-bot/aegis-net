@@ -1,0 +1,5 @@
+# Core networking and packet manipulation
+scapy>=2.5.0
+
+# Testing framework for unit tests
+pytest>=7.3.0
