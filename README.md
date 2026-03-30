@@ -101,5 +101,10 @@ pytest tests/
 
 ## ⚠️ Disclaimer
 **Educational and Defensive Use Only.** This tool is designed to protect networks and analyze layer-2 vulnerabilities. Do not use Aegis-Net to monitor networks or intercept traffic for which you do not have explicit authorization. The authors are not responsible for any misuse or damage caused by this software.
-```
 
+## Planned Changes
+1. `config/settings.yaml`: We currently have hardcoded values (like the bucket size or leak rate in the sequence analyzer). We should eventually move these here.
+
+2. `core/logger.py`: We've been using standard logging.getLogger(__name__), but we haven't configured the formatting, log levels, or file handlers.
+
+3. The `seq_analyzer.py` detects a confirmed deauth attack and triggers a mitigation_callback, but we haven't defined what that callback actually does (e.g., logging to a dedicated security file, triggering an AP re-association, or alerting a dashboard). Passed methods exist to add this functionality later.
