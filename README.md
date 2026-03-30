@@ -4,43 +4,14 @@ Aegis-Net is a lightweight, multiprocessing Python security daemon designed to a
 
 It currently features dual-engine protection against **ARP Cache Poisoning** and **802.11 Deauthentication/Disassociation** attacks.
 
-## 🛡️ Core Features
+## Core Features
 
 * **Parallel Processing Architecture:** Utilizes Python's `multiprocessing` library to run the ARP and Wi-Fi defense engines on separate CPU cores, ensuring zero packet drops even under heavy network load.
 * **Stateful ARP Defense (The "Brains"):** Replaces vulnerable local ARP caches with an authoritative SQLite database. It silently registers new devices on first use but instantly flags and mitigates overlapping IP claims (ARP Spoofing) via Gratuitous ARP (GARP) bursts.
 * **Leaky-Bucket Wi-Fi Defense:** Employs a highly efficient token-bucket algorithm to track 802.11 management frame sequence numbers. It mathematically distinguishes between normal network jitter/packet drops and active, malicious frame injection.
-* **Graceful Hardware Management:** Includes custom bash scripts that cleanly detach and reattach wireless adapters from `NetworkManager` for monitor mode, avoiding the destructive network drops caused by tools like `airmon-ng`.
+* **Graceful Hardware Management:** Includes custom bash scripts that cleanly detach and reattach wireless adapters from `NetworkManager` for monitor mode, avoiding the destructive network drops caused by `aircrack-ng` (but `airmon-ng` still can be used to kill NetworkManager in order to resolve monitor mode conflicts)
 
-## 📂 Repository Structure
-
-```text
-aegis-net/
-├── main.py                     # Main orchestrator and multiprocessing entry point
-├── requirements.txt            # Python dependencies
-├── core/                       # Shared daemon utilities
-│   ├── database.py             # Authoritative SQLite DB manager
-│   ├── logger.py               # Centralized logging configuration
-│   └── sniffer.py              # Base Scapy asynchronous sniffer class
-├── modules/
-│   ├── arp/                    # ARP Defense Subsystem
-│   │   ├── monitor.py          # Sniffs and parses raw ARP frames
-│   │   ├── state.py            # Evaluates claims against the DB
-│   │   └── mitigator.py        # Deploys GARP corrections
-│   └── wifi/                   # Wi-Fi Defense Subsystem
-│       ├── monitor.py          # Sniffs 802.11 management frames
-│       ├── seq_analyzer.py     # Leaky-bucket sequence analysis
-│       └── mitigator.py        # Handles alerts and active responses
-├── scripts/                    # Hardware configuration scripts
-│   ├── setup_monitor.sh        # Safely enables monitor mode
-│   └── teardown_monitor.sh     # Restores managed mode and NetworkManager
-├── utils/
-│   └── validators.py           # Regex-based MAC and IP sanitization
-└── tests/                      # Unit testing suite
-    ├── test_arp_state.py       
-    └── test_seq_analyzer.py    
-```
-
-## ⚙️ Prerequisites
+## Prerequisites
 
 * **OS:** A Linux environment (Debian/Ubuntu, Kali, or Raspberry Pi OS recommended).
 * **Permissions:** Root privileges (`sudo`) are required to manipulate network interfaces and sniff raw sockets.
