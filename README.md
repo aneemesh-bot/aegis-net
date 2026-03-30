@@ -31,7 +31,7 @@ It currently features dual-engine protection against **ARP Cache Poisoning** and
    pip3 install -r requirements.txt
    ```
 
-## 🛠️ Usage Guide
+## Usage Guide
 
 ### 1. Prepare the Hardware
 Before starting the daemon, you must place your dedicated Wi-Fi adapter into monitor mode. Our setup script safely sidelines `NetworkManager` so it doesn't interfere.
@@ -62,7 +62,7 @@ When you are done monitoring, stop the daemon (`Ctrl+C`). Then, use the teardown
 sudo ./scripts/teardown_monitor.sh wlan1
 ```
 
-## 🧪 Testing
+## Testing
 
 You can verify the core logic engines (the Leaky Bucket and the Authoritative DB) without needing active hardware or root privileges by running the test suite:
 
@@ -70,7 +70,7 @@ You can verify the core logic engines (the Leaky Bucket and the Authoritative DB
 pytest tests/
 ```
 
-## ⚠️ Disclaimer
+## Disclaimer
 **Educational and Defensive Use Only.** This tool is designed to protect networks and analyze layer-2 vulnerabilities. Do not use Aegis-Net to monitor networks or intercept traffic for which you do not have explicit authorization. The authors are not responsible for any misuse or damage caused by this software.
 
 ## Planned Changes
